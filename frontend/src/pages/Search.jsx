@@ -5,7 +5,7 @@ import { searchTrends } from '../utils/api'
 import { TrendCard, TrendCardSkeleton } from '../components/TrendCard'
 
 export function Search() {
-  const { searchHistory, addSearchHistory, clearSearchHistory, subscribedChannels } = useStore()
+  const { searchHistory, addSearchHistory, clearSearchHistory, trends } = useStore()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
   const [loading, setLoading] = useState(false)
@@ -17,7 +17,7 @@ export function Search() {
     inputRef.current?.focus()
   }, [])
 
-  // 执行搜索
+  // 执行搜索（本地搜索）
   const handleSearch = async (searchQuery = query) => {
     const q = searchQuery.trim()
     if (!q) return
@@ -27,7 +27,8 @@ export function Search() {
     addSearchHistory(q)
 
     try {
-      const data = await searchTrends(q, { channels: subscribedChannels })
+      // 在本地热榜数据中搜索
+      const data = await searchTrends(q, trends)
       setResults(data.items || [])
     } catch (err) {
       console.error('搜索失败:', err)
@@ -121,7 +122,7 @@ export function Search() {
           <div className="text-center py-20">
             <TrendingUp className="w-12 h-12 text-gray-600 mx-auto mb-4" />
             <p className="text-gray-400">输入关键词搜索热榜内容</p>
-            <p className="text-gray-500 text-sm mt-2">支持标题、描述等内容搜索</p>
+            <p className="text-gray-500 text-sm mt-2">请先在首页加载热榜数据</p>
           </div>
         )}
 
