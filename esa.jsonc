@@ -1,0 +1,59 @@
+{
+    "$schema": "https://esa.aliyun.com/schema/esa.jsonc",
+    "version": "1.0",
+    "build": {
+        "command": "npm install && npm run build",
+        "outputDirectory": "dist",
+        "rootDirectory": "frontend",
+        "nodeVersion": "18"
+    },
+    "routes": [
+        {
+            "src": "/api/trends",
+            "dest": "/functions/trends.js"
+        },
+        {
+            "src": "/api/summary",
+            "dest": "/functions/summary.js"
+        },
+        {
+            "src": "/api/settings",
+            "dest": "/functions/settings.js"
+        },
+        {
+            "src": "/api/search",
+            "dest": "/functions/search.js"
+        },
+        {
+            "src": "/api/health",
+            "dest": "/functions/health.js"
+        }
+    ],
+    "functions": {
+        "directory": "functions",
+        "runtime": "nodejs18.x"
+    },
+    "headers": [
+        {
+            "source": "/(.*)",
+            "headers": [
+                {
+                    "key": "X-Content-Type-Options",
+                    "value": "nosniff"
+                },
+                {
+                    "key": "X-Frame-Options",
+                    "value": "DENY"
+                }
+            ]
+        }
+    ],
+    "cache": {
+        "static": {
+            "maxAge": 31536000
+        },
+        "html": {
+            "maxAge": 0
+        }
+    }
+}

@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #12121a;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2a35;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3a45;
+}
+
+/* 禁用选中高亮 */
+.no-select {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  user-select: none;
+}
+
+/* 平滑滚动 */
+html {
+  scroll-behavior: smooth;
+}
+
+/* 骨架屏动画 */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #12121a 25%,
+    #1a1a25 50%,
+    #12121a 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* 热度火焰动画 */
+@keyframes flame {
+  0%, 100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.1);
+  }
+}
+
+.flame-icon {
+  animation: flame 0.5s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+/* 卡片悬浮效果 */
+.card-hover {
+  transition: all 0.2s ease;
+}
+
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(255, 107, 53, 0.1);
+}
+
+/* 渐变文字 */
+.gradient-text {
+  background: linear-gradient(135deg, #ff6b35 0%, #00e5cc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 霓虹边框 */
+.neon-border {
+  border: 1px solid transparent;
+  background: linear-gradient(#12121a, #12121a) padding-box,
+              linear-gradient(135deg, #ff6b35, #00e5cc) border-box;
+}
+
+/* 下拉刷新指示器 */
+.pull-indicator {
+  transition: transform 0.2s ease;
+}
+
+/* 频道标签激活状态 */
+.channel-active {
+  position: relative;
+}
+
+.channel-active::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  background: #ff6b35;
+  border-radius: 1px;
+}
+
+/* 移动端触摸反馈 */
+@media (hover: none) {
+  .touch-feedback:active {
+    opacity: 0.7;
+    transform: scale(0.98);
+  }
+}
+
+/* 安全区域适配 */
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.safe-area-top {
+  padding-top: env(safe-area-inset-top, 0);
+}

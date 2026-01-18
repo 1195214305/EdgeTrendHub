@@ -1,0 +1,16 @@
+{
+  "name": "EdgeTrendHub",
+  "short_name": "热榜聚合",
+  "description": "边缘热榜聚合平台 - 一站式掌握全网热点",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#ff6b35",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
