@@ -3,7 +3,7 @@
  * 路径: /api/health
  */
 
-export default async function handler(request, env) {
+export default async function handler(request) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
@@ -14,27 +14,11 @@ export default async function handler(request, env) {
     return new Response(null, { headers: corsHeaders })
   }
 
-  const status = {
+  return new Response(JSON.stringify({
     status: 'ok',
     timestamp: Date.now(),
-    version: '1.0.0',
-    services: {
-      kv: false,
-      api: true
-    }
-  }
-
-  // 检查 KV 连接
-  if (env && env.TREND_KV) {
-    try {
-      await env.TREND_KV.get('health-check')
-      status.services.kv = true
-    } catch (e) {
-      status.services.kv = false
-    }
-  }
-
-  return new Response(JSON.stringify(status), {
+    version: '1.0.0'
+  }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' }
   })
 }

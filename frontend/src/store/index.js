@@ -67,7 +67,9 @@ export const useStore = create(
         blockedKeywords: state.blockedKeywords.filter(k => k !== keyword)
       })),
 
-      // 千问API Key（仅存储是否已配置的状态）
+      // 千问API Key（本地存储）
+      qwenApiKey: '',
+      setQwenApiKey: (key) => set({ qwenApiKey: key, hasApiKey: !!key }),
       hasApiKey: false,
       setHasApiKey: (has) => set({ hasApiKey: has }),
 
@@ -105,6 +107,7 @@ export const useStore = create(
         subscribedChannels: state.subscribedChannels,
         favorites: state.favorites,
         blockedKeywords: state.blockedKeywords,
+        qwenApiKey: state.qwenApiKey,
         hasApiKey: state.hasApiKey,
         theme: state.theme,
         fontSize: state.fontSize,

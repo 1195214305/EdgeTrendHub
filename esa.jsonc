@@ -9,24 +9,8 @@
     },
     "routes": [
         {
-            "src": "/api/trends",
-            "dest": "/functions/trends.js"
-        },
-        {
-            "src": "/api/summary",
-            "dest": "/functions/summary.js"
-        },
-        {
-            "src": "/api/settings",
-            "dest": "/functions/settings.js"
-        },
-        {
-            "src": "/api/search",
-            "dest": "/functions/search.js"
-        },
-        {
-            "src": "/api/health",
-            "dest": "/functions/health.js"
+            "src": "/api/(.*)",
+            "dest": "/functions/$1.js"
         }
     ],
     "functions": {

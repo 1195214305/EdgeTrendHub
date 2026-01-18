@@ -4,7 +4,7 @@ import { useStore, PLATFORMS } from '../store'
 import { generateSummary } from '../utils/api'
 
 export function TrendCard({ item, rank }) {
-  const { userId, hasApiKey, addFavorite, removeFavorite, isFavorite, summaryCache, setSummaryCache, blockedKeywords } = useStore()
+  const { userId, hasApiKey, qwenApiKey, addFavorite, removeFavorite, isFavorite, summaryCache, setSummaryCache, blockedKeywords } = useStore()
   const [loading, setLoading] = useState(false)
   const [showSummary, setShowSummary] = useState(false)
   const [error, setError] = useState(null)
@@ -43,7 +43,7 @@ export function TrendCard({ item, rank }) {
     setError(null)
 
     try {
-      const result = await generateSummary(userId, item.title, item.desc || '')
+      const result = await generateSummary(userId, item.title, item.desc || '', qwenApiKey)
       setSummaryCache(item.id, result.summary)
       setShowSummary(true)
     } catch (err) {

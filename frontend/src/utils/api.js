@@ -49,10 +49,10 @@ export async function fetchPlatformTrends(platform) {
 }
 
 // 生成AI摘要
-export async function generateSummary(userId, title, content = '') {
+export async function generateSummary(userId, title, content = '', apiKey = '') {
   return request('/summary', {
     method: 'POST',
-    body: JSON.stringify({ userId, title, content })
+    body: JSON.stringify({ userId, title, content, apiKey })
   })
 }
 

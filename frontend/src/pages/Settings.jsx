@@ -1,14 +1,13 @@
-import { useState, useEffect } from 'react'
-import { Settings as SettingsIcon, Key, Save, Check, Trash2, Plus, X, Layers, Type, Info, ExternalLink } from 'lucide-react'
+import { useState } from 'react'
+import { Settings as SettingsIcon, Key, Save, Check, Plus, X, Layers, Type, Info, ExternalLink } from 'lucide-react'
 import { useStore } from '../store'
 import { ChannelManager } from '../components/ChannelTabs'
-import { saveSettings, getSettings } from '../utils/api'
 
 export function Settings() {
   const {
-    userId,
     hasApiKey,
-    setHasApiKey,
+    qwenApiKey,
+    setQwenApiKey,
     fontSize,
     setFontSize,
     blockedKeywords,
@@ -17,41 +16,16 @@ export function Settings() {
   } = useStore()
 
   const [apiKey, setApiKey] = useState('')
-  const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [newKeyword, setNewKeyword] = useState('')
 
-  // 加载设置
-  useEffect(() => {
-    const loadSettings = async () => {
-      try {
-        const settings = await getSettings(userId)
-        if (settings.qwenApiKey) {
-          setHasApiKey(true)
-        }
-      } catch (err) {
-        console.error('加载设置失败:', err)
-      }
-    }
-    loadSettings()
-  }, [userId, setHasApiKey])
-
-  // 保存API Key
-  const handleSaveApiKey = async () => {
+  // 保存API Key（本地存储）
+  const handleSaveApiKey = () => {
     if (!apiKey.trim()) return
-
-    setSaving(true)
-    try {
-      await saveSettings(userId, { qwenApiKey: apiKey.trim() })
-      setHasApiKey(true)
-      setApiKey('')
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2000)
-    } catch (err) {
-      alert('保存失败，请稍后重试')
-    } finally {
-      setSaving(false)
-    }
+    setQwenApiKey(apiKey.trim())
+    setApiKey('')
+    setSaved(true)
+    setTimeout(() => setSaved(false), 2000)
   }
 
   // 添加屏蔽词
@@ -108,16 +82,16 @@ export function Settings() {
             />
             <button
               onClick={handleSaveApiKey}
-              disabled={!apiKey.trim() || saving}
+              disabled={!apiKey.trim()}
               className="px-4 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed rounded-lg flex items-center gap-2 transition-colors"
             >
               {saved ? <Check className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-              {saving ? '保存中...' : saved ? '已保存' : '保存'}
+              {saved ? '已保存' : '保存'}
             </button>
           </div>
 
           <p className="text-xs text-gray-500 mt-3">
-            API Key 将通过边缘函数加密存储，不会暴露在前端代码中
+            API Key 存储在本地浏览器中，通过边缘函数安全调用千问 API
           </p>
         </section>
 
@@ -219,7 +193,7 @@ export function Settings() {
           <div className="text-sm text-gray-400 space-y-2">
             <p>EdgeTrendHub v1.0.0</p>
             <p>基于阿里云 ESA Pages 边缘计算平台构建</p>
-            <p>热榜数据来源于各平台公开 API</p>
+            <p>热榜数据来源于 DailyHotApi 开源项目</p>
           </div>
           <div className="mt-4 pt-4 border-t border-dark-border">
             <a

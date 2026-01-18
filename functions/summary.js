@@ -1,15 +1,11 @@
 /**
  * 边缘函数: AI摘要生成接口
  * 路径: /api/summary
- *
- * 使用通义千问 API 生成热点摘要
  */
 
-// 千问 API 地址
 const QWEN_API_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'
 
-export default async function handler(request, env) {
-  // CORS 处理
+export default async function handler(request) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -29,28 +25,16 @@ export default async function handler(request, env) {
 
   try {
     const body = await request.json()
-    const { userId, title, content } = body
+    const { userId, title, content, apiKey } = body
 
-    if (!userId || !title) {
+    if (!title) {
       return new Response(JSON.stringify({ error: '缺少必要参数' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       })
     }
 
-    // 从 KV 获取用户的 API Key
-    let apiKey = null
-
-    if (env && env.USER_KV) {
-      const userSettings = await env.USER_KV.get(`settings:${userId}`, 'json')
-      apiKey = userSettings?.qwenApiKey
-    }
-
-    // 如果用户没有配置，尝试使用环境变量中的默认 Key
-    if (!apiKey && env && env.QWEN_API_KEY) {
-      apiKey = env.QWEN_API_KEY
-    }
-
+    // 使用前端传来的 API Key
     if (!apiKey) {
       return new Response(JSON.stringify({
         error: '请先在设置中配置千问 API Key'
@@ -60,18 +44,13 @@ export default async function handler(request, env) {
       })
     }
 
-    // 构建提示词
-    const prompt = `请用简洁的语言（不超过100字）总结以下热点新闻的核心内容，帮助读者快速了解要点：
+    const prompt = `请用简洁的语言（不超过100字）总结以下热点新闻的核心内容：
 
 标题：${title}
 ${content ? `详情：${content}` : ''}
 
-要求：
-1. 直接输出摘要内容，不要有"摘要："等前缀
-2. 语言简洁明了，突出关键信息
-3. 保持客观中立的语气`
+要求：直接输出摘要内容，语言简洁明了，保持客观中立。`
 
-    // 调用千问 API
     const response = await fetch(QWEN_API_URL, {
       method: 'POST',
       headers: {
@@ -81,14 +60,8 @@ ${content ? `详情：${content}` : ''}
       body: JSON.stringify({
         model: 'qwen-turbo',
         messages: [
-          {
-            role: 'system',
-            content: '你是一个专业的新闻摘要助手，擅长用简洁的语言总结热点新闻的核心内容。'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
+          { role: 'system', content: '你是一个专业的新闻摘要助手。' },
+          { role: 'user', content: prompt }
         ],
         max_tokens: 200,
         temperature: 0.7
@@ -96,9 +69,6 @@ ${content ? `详情：${content}` : ''}
     })
 
     if (!response.ok) {
-      const errorText = await response.text()
-      console.error('千问 API 调用失败:', response.status, errorText)
-
       return new Response(JSON.stringify({
         error: 'AI 服务暂时不可用',
         details: response.status
@@ -110,12 +80,6 @@ ${content ? `详情：${content}` : ''}
 
     const result = await response.json()
     const summary = result.choices?.[0]?.message?.content || '摘要生成失败'
-
-    // 缓存摘要结果（可选）
-    const cacheKey = `summary:${Buffer.from(title).toString('base64').slice(0, 32)}`
-    if (env && env.TREND_KV) {
-      await env.TREND_KV.put(cacheKey, summary, { expirationTtl: 86400 }) // 24小时
-    }
 
     return new Response(JSON.stringify({
       summary: summary.trim(),
