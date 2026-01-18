@@ -1,0 +1,13 @@
+{
+  "name": "edge-trend-hub",
+  "version": "1.0.0",
+  "description": "边缘热榜聚合平台 - 基于阿里云ESA Pages",
+  "scripts": {
+    "install:frontend": "cd frontend && npm install",
+    "build": "cd frontend && npm run build",
+    "dev": "cd frontend && npm run dev"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
