@@ -5,8 +5,7 @@
 
 const QWEN_API_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'
 
-export async function onRequest(context) {
-  const { request } = context
+export default async function handler(request) {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
