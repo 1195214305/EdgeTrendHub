@@ -10,7 +10,7 @@ import searchHandler from './api/search.js'
 import settingsHandler from './api/settings.js'
 import healthHandler from './api/health.js'
 
-export default async function handler(request) {
+async function fetch(request) {
   const url = new URL(request.url)
   const path = url.pathname
 
@@ -35,6 +35,8 @@ export default async function handler(request) {
     return healthHandler(request)
   }
 
-  // 非 API 请求返回 null，让 ESA 处理静态资源
-  return null
+  // 非 API 请求，返回 bypass 让 ESA 处理静态资源
+  return new Response(null, { status: 404 })
 }
+
+export default { fetch }
