@@ -251,11 +251,154 @@ async function fetchBaiduFallback() {
     .filter(x => x.title)
 }
 
+// 公开接口兜底：头条热榜
+async function fetchToutiaoFallback() {
+  const endpoint = 'https://www.toutiao.com/hot-event/hot-board/?origin=toutiao_pc'
+  const { ok, data } = await fetchJson(endpoint, {
+    headers: { 'Referer': 'https://www.toutiao.com/' },
+    timeoutMs: 8000
+  })
+
+  const list = data?.data
+  if (!ok || !Array.isArray(list)) return []
+
+  return list
+    .slice(0, 20)
+    .map((item, index) => {
+      const title = item?.Title || item?.title || ''
+      const url = item?.Url || item?.url || `https://www.toutiao.com/trending/${item?.ClusterIdStr || ''}`
+      return {
+        id: makeStableId('toutiao', title, url),
+        title,
+        desc: '',
+        url,
+        hot: toNumber(item?.HotValue || item?.hot_value || 0),
+        cover: item?.Image?.url || null,
+        source: 'toutiao',
+        tag: item?.LabelDesc || null,
+        timestamp: Date.now()
+      }
+    })
+    .filter(x => x.title)
+}
+
+// 公开接口兜底：抖音热榜
+async function fetchDouyinFallback() {
+  const endpoint = 'https://www.douyin.com/aweme/v1/web/hot/search/list/'
+  const { ok, data } = await fetchJson(endpoint, {
+    headers: { 'Referer': 'https://www.douyin.com/' },
+    timeoutMs: 8000
+  })
+
+  const list = data?.data?.word_list
+  if (!ok || !Array.isArray(list)) return []
+
+  return list
+    .slice(0, 20)
+    .map((item, index) => {
+      const word = item?.word || ''
+      const url = `https://www.douyin.com/search/${encodeURIComponent(word)}`
+      return {
+        id: makeStableId('douyin', word, url),
+        title: word,
+        desc: '',
+        url,
+        hot: toNumber(item?.hot_value || 0),
+        cover: null,
+        source: 'douyin',
+        tag: item?.label?.toString() || null,
+        timestamp: Date.now()
+      }
+    })
+    .filter(x => x.title)
+}
+
+// 公开接口兜底：掘金热榜
+async function fetchJuejinFallback() {
+  const endpoint = 'https://api.juejin.cn/content_api/v1/content/article_rank?category_id=1&type=hot'
+  const { ok, data } = await fetchJson(endpoint, {
+    headers: { 'Referer': 'https://juejin.cn/' },
+    timeoutMs: 8000
+  })
+
+  const list = data?.data
+  if (!ok || !Array.isArray(list)) return []
+
+  return list
+    .slice(0, 20)
+    .map((item, index) => {
+      const content = item?.content || {}
+      const title = content?.title || ''
+      const articleId = content?.content_id
+      const url = articleId ? `https://juejin.cn/post/${articleId}` : '#'
+      return {
+        id: makeStableId('juejin', title, url),
+        title,
+        desc: content?.brief_content || '',
+        url,
+        hot: toNumber(item?.content_counter?.hot_rank || content?.view_count || 0),
+        cover: content?.cover_image || null,
+        source: 'juejin',
+        tag: null,
+        timestamp: Date.now()
+      }
+    })
+    .filter(x => x.title)
+}
+
+// 公开接口兜底：GitHub Trending
+async function fetchGithubFallback() {
+  // GitHub没有官方API，使用第三方或返回空
+  return []
+}
+
+// 公开接口兜底：V2EX热榜
+async function fetchV2exFallback() {
+  const endpoint = 'https://www.v2ex.com/api/topics/hot.json'
+  const { ok, data } = await fetchJson(endpoint, {
+    headers: { 'Referer': 'https://www.v2ex.com/' },
+    timeoutMs: 8000
+  })
+
+  if (!ok || !Array.isArray(data)) return []
+
+  return data
+    .slice(0, 20)
+    .map((item, index) => {
+      const title = item?.title || ''
+      const url = item?.url || `https://www.v2ex.com/t/${item?.id}`
+      return {
+        id: makeStableId('v2ex', title, url),
+        title,
+        desc: item?.content_rendered?.replace(/<[^>]+>/g, '').slice(0, 100) || '',
+        url,
+        hot: toNumber(item?.replies || 0),
+        cover: item?.member?.avatar_large || null,
+        source: 'v2ex',
+        tag: item?.node?.title || null,
+        timestamp: Date.now()
+      }
+    })
+    .filter(x => x.title)
+}
+
+// 公开接口兜底：豆瓣电影
+async function fetchDoubanFallback() {
+  // 豆瓣API需要认证，返回空
+  return []
+}
+
 const FALLBACK_FETCHERS = {
   weibo: fetchWeiboFallback,
   zhihu: fetchZhihuFallback,
   bilibili: fetchBilibiliFallback,
-  baidu: fetchBaiduFallback
+  baidu: fetchBaiduFallback,
+  toutiao: fetchToutiaoFallback,
+  douyin: fetchDouyinFallback,
+  juejin: fetchJuejinFallback,
+  github: fetchGithubFallback,
+  v2ex: fetchV2exFallback,
+  douban: fetchDoubanFallback
 }
 
 // 获取单个平台热榜
