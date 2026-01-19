@@ -3,7 +3,8 @@
  * 路径: /api/search
  */
 
-export default async function handler(request) {
+export async function onRequest(context) {
+  const { request } = context
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',

@@ -6,7 +6,8 @@
  * 设置存储在前端 localStorage 中
  */
 
-export default async function handler(request) {
+export async function onRequest(context) {
+  const { request } = context
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',

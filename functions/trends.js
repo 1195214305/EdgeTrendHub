@@ -318,7 +318,8 @@ function getCache() {
 }
 
 // ESA Pages 边缘函数入口
-export default async function handler(request) {
+export async function onRequest(context) {
+  const { request } = context
   const corsHeaders = getCorsHeaders()
 
   if (request.method === 'OPTIONS') {

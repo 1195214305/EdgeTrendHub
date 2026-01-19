@@ -1,43 +1,34 @@
 {
-    "$schema": "https://esa.aliyun.com/schema/esa.jsonc",
-    "version": "1.0",
-    "build": {
-        "command": "npm install && npm run build",
-        "outputDirectory": "dist",
-        "rootDirectory": "frontend",
-        "nodeVersion": "22"
+  "name": "edge-trend-hub",
+  "installCommand": "cd frontend && npm install",
+  "buildCommand": "cd frontend && npm run build",
+  "assets": {
+    "directory": "./frontend/dist",
+    "notFoundStrategy": "singlePageApplication"
+  },
+  "functions": {
+    "directory": "./functions"
+  },
+  "routes": [
+    {
+      "src": "/api/trends",
+      "dest": "/functions/trends.js"
     },
-    "routes": [
-        {
-            "src": "/api/(.*)",
-            "dest": "/functions/$1.js"
-        }
-    ],
-    "functions": {
-        "directory": "functions",
-        "runtime": "nodejs18.x"
+    {
+      "src": "/api/summary",
+      "dest": "/functions/summary.js"
     },
-    "headers": [
-        {
-            "source": "/(.*)",
-            "headers": [
-                {
-                    "key": "X-Content-Type-Options",
-                    "value": "nosniff"
-                },
-                {
-                    "key": "X-Frame-Options",
-                    "value": "DENY"
-                }
-            ]
-        }
-    ],
-    "cache": {
-        "static": {
-            "maxAge": 31536000
-        },
-        "html": {
-            "maxAge": 0
-        }
+    {
+      "src": "/api/search",
+      "dest": "/functions/search.js"
+    },
+    {
+      "src": "/api/settings",
+      "dest": "/functions/settings.js"
+    },
+    {
+      "src": "/api/health",
+      "dest": "/functions/health.js"
     }
+  ]
 }
