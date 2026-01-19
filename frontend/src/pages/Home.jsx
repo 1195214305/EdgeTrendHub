@@ -36,13 +36,17 @@ export function Home() {
   }, [])
 
   // 加载热榜数据
-  const loadTrends = useCallback(async (showLoading = true) => {
+  const loadTrends = useCallback(async (showLoading = true, options = {}) => {
     if (showLoading) setLoading(true)
     setError(null)
 
     try {
-      const data = await fetchTrends(subscribedChannels)
-      setTrends(data.items || [])
+      const data = await fetchTrends(subscribedChannels, options)
+      const items = Array.isArray(data?.items) ? data.items : null
+      if (!items) {
+        throw new Error('热榜接口返回异常，请稍后重试')
+      }
+      setTrends(items)
       setLastRefresh(Date.now())
     } catch (err) {
       setError(err.message || '加载失败，请稍后重试')
@@ -60,7 +64,7 @@ export function Home() {
   // 下拉刷新
   const handleRefresh = async () => {
     setRefreshing(true)
-    await loadTrends(false)
+    await loadTrends(false, { fresh: true })
   }
 
   // 过滤当前频道的数据

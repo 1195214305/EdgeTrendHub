@@ -66,7 +66,6 @@ async function fetchJson(url, { timeoutMs = 8000, headers = {}, method = 'GET' }
       method,
       headers: {
         'Accept': 'application/json,text/plain,*/*',
-        'User-Agent': 'EdgeTrendHub/1.0',
         ...headers
       },
       signal: controller.signal

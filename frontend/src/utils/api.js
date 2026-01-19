@@ -10,6 +10,7 @@ async function fetchJson(url, init = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
   try {
     const res = await fetch(url, { ...init, signal: controller.signal })
 
+    const contentType = (res.headers.get('content-type') || '').toLowerCase()
     const text = await res.text()
     let data = null
     if (text) {
@@ -17,6 +18,17 @@ async function fetchJson(url, init = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
         data = JSON.parse(text)
       } catch {
         data = null
+      }
+    }
+
+    // 所有 /api/* 都期望 JSON；若拿到 HTML/空响应，多半是 /api 路由未生效（被 SPA index.html 接管）
+    if (res.ok) {
+      const looksJson = contentType.includes('application/json') || contentType.includes('+json')
+      if (!looksJson || data === null) {
+        const err = new Error('接口返回异常（非 JSON），请检查 ESA 部署的 /api 路由与函数是否生效')
+        err.status = res.status
+        err.data = { contentType, preview: (text || '').slice(0, 120) }
+        throw err
       }
     }
 
