@@ -1,49 +1,12 @@
 {
-    "$schema": "https://esa.aliyun.com/schema/esa.jsonc",
-    "version": "1.0",
-    "build": {
-        "command": "npm install && npm run build",
-        "outputDirectory": "dist",
-        "rootDirectory": "frontend",
-        "nodeVersion": "18"
-    },
-    "routes": [
-        {
-            "src": "/api/(.*)",
-            "dest": "/functions/$1.js"
-        }
-    ],
-    "rewrites": [
-        {
-            "source": "/((?!api/).*)",
-            "destination": "/index.html"
-        }
-    ],
-    "functions": {
-        "directory": "functions",
-        "runtime": "nodejs18.x"
-    },
-    "headers": [
-        {
-            "source": "/(.*)",
-            "headers": [
-                {
-                    "key": "X-Content-Type-Options",
-                    "value": "nosniff"
-                },
-                {
-                    "key": "X-Frame-Options",
-                    "value": "DENY"
-                }
-            ]
-        }
-    ],
-    "cache": {
-        "static": {
-            "maxAge": 31536000
-        },
-        "html": {
-            "maxAge": 0
-        }
-    }
+  "name": "edgetrendhub",
+  "installCommand": "cd frontend && npm install",
+  "buildCommand": "cd frontend && npm run build",
+  "assets": {
+    "directory": "./frontend/dist",
+    "notFoundStrategy": "singlePageApplication"
+  },
+  "functions": {
+    "directory": "./functions"
+  }
 }
