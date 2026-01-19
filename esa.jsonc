@@ -2,10 +2,10 @@
     "$schema": "https://esa.aliyun.com/schema/esa.jsonc",
     "version": "1.0",
     "build": {
-        "installCommand": "cd frontend && npm install",
-        "command": "cd frontend && npm run build",
-        "outputDirectory": "frontend/dist",
-        "nodeVersion": "18"
+        "command": "npm install && npm run build",
+        "outputDirectory": "dist",
+        "rootDirectory": "frontend",
+        "nodeVersion": "22"
     },
     "routes": [
         {
