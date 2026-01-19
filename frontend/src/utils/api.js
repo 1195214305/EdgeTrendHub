@@ -1,168 +1,89 @@
-// API 请求封装
-// 直接调用 DailyHotApi 公共实例
+// 前端 API 封装
+// 说明：所有外部数据获取都通过 ESA 边缘函数完成，避免浏览器直连第三方产生的 CORS/网络问题。
 
-const DAILY_HOT_API = 'https://api-hot.imsyy.top'
-const QWEN_API_URL = 'https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions'
+const DEFAULT_TIMEOUT_MS = 10000
 
-// 平台映射配置
-const PLATFORM_CONFIG = {
-  weibo: { endpoint: '/weibo', name: '微博' },
-  zhihu: { endpoint: '/zhihu', name: '知乎' },
-  bilibili: { endpoint: '/bilibili', name: 'B站' },
-  douyin: { endpoint: '/douyin', name: '抖音' },
-  baidu: { endpoint: '/baidu', name: '百度' },
-  toutiao: { endpoint: '/toutiao', name: '头条' },
-  douban: { endpoint: '/douban-movie', name: '豆瓣' },
-  juejin: { endpoint: '/juejin', name: '掘金' },
-  github: { endpoint: '/github', name: 'GitHub' },
-  v2ex: { endpoint: '/v2ex', name: 'V2EX' }
-}
-
-// 获取单个平台热榜
-async function fetchPlatformTrends(platform) {
-  const config = PLATFORM_CONFIG[platform]
-  if (!config) return []
+async function fetchJson(url, init = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
 
   try {
-    const response = await fetch(`${DAILY_HOT_API}${config.endpoint}`)
+    const res = await fetch(url, { ...init, signal: controller.signal })
 
-    if (!response.ok) {
-      console.error(`获取 ${platform} 热榜失败: ${response.status}`)
-      return []
+    const text = await res.text()
+    let data = null
+    if (text) {
+      try {
+        data = JSON.parse(text)
+      } catch {
+        data = null
+      }
     }
 
-    const data = await response.json()
-
-    if (data.code !== 200 || !Array.isArray(data.data)) {
-      return []
+    if (!res.ok) {
+      const message = data?.error || data?.message || `${res.status} ${res.statusText}`
+      const err = new Error(message)
+      err.status = res.status
+      err.data = data
+      throw err
     }
 
-    return data.data.slice(0, 20).map((item, index) => ({
-      id: `${platform}_${item.id || index}_${Date.now()}`,
-      title: item.title || '',
-      desc: item.desc || item.description || '',
-      url: item.url || item.mobileUrl || '#',
-      hot: item.hot || item.hotValue || 0,
-      cover: item.pic || item.cover || null,
-      source: platform,
-      tag: item.label || null,
-      timestamp: Date.now()
-    }))
-  } catch (error) {
-    console.error(`获取 ${platform} 热榜异常:`, error)
-    return []
+    return data
+  } catch (err) {
+    if (err && err.name === 'AbortError') {
+      throw new Error('请求超时，请稍后重试')
+    }
+    throw err
+  } finally {
+    clearTimeout(timer)
   }
 }
 
-// 标题相似度计算
-function calculateSimilarity(a, b) {
-  const setA = new Set(a.split(''))
-  const setB = new Set(b.split(''))
-  const intersection = [...setA].filter(x => setB.has(x)).length
-  const union = new Set([...setA, ...setB]).size
-  return union > 0 ? intersection / union : 0
-}
-
-// 去重聚合
-function deduplicateTrends(trends) {
-  const result = []
-  const threshold = 0.7
-
-  for (const item of trends) {
-    const isDuplicate = result.some(r =>
-      calculateSimilarity(r.title, item.title) > threshold
-    )
-    if (!isDuplicate) {
-      result.push(item)
-    }
-  }
-
-  return result
-}
-
-// 获取热榜数据
+// 获取热榜数据（通过边缘函数）
 export async function fetchTrends(channels = [], options = {}) {
-  const requestedChannels = channels.length > 0
-    ? channels.filter(c => PLATFORM_CONFIG[c])
-    : Object.keys(PLATFORM_CONFIG)
+  const limit = Number.isFinite(options.limit) ? options.limit : 100
+  const timeoutMs = Number.isFinite(options.timeoutMs) ? options.timeoutMs : DEFAULT_TIMEOUT_MS
 
-  const limit = options.limit || 100
+  const url = new URL('/api/trends', window.location.origin)
+  url.searchParams.set('limit', String(limit))
 
-  // 并发获取所有平台热榜
-  const promises = requestedChannels.map(platform => fetchPlatformTrends(platform))
-  const results = await Promise.all(promises)
-
-  // 合并所有结果
-  const allTrends = results.flat()
-
-  // 按热度排序
-  allTrends.sort((a, b) => (b.hot || 0) - (a.hot || 0))
-
-  // 去重
-  const deduplicated = deduplicateTrends(allTrends)
-
-  return {
-    items: deduplicated.slice(0, limit),
-    timestamp: Date.now(),
-    channels: requestedChannels
+  if (Array.isArray(channels) && channels.length > 0) {
+    url.searchParams.set('channels', channels.join(','))
   }
+
+  if (options.fresh) {
+    url.searchParams.set('fresh', '1')
+  }
+
+  return fetchJson(url.toString(), { method: 'GET' }, timeoutMs)
 }
 
-// 生成AI摘要（直接调用千问API）
+// 生成 AI 摘要（通过边缘函数代理调用千问 API）
 export async function generateSummary(userId, title, content = '', apiKey = '') {
   if (!apiKey) {
     throw new Error('请先在设置中配置千问 API Key')
   }
 
-  const prompt = `请用简洁的语言（不超过100字）总结以下热点新闻的核心内容：
-
-标题：${title}
-${content ? `详情：${content}` : ''}
-
-要求：直接输出摘要内容，语言简洁明了，保持客观中立。`
-
-  const response = await fetch(QWEN_API_URL, {
+  return fetchJson('/api/summary', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: 'qwen-turbo',
-      messages: [
-        { role: 'system', content: '你是一个专业的新闻摘要助手。' },
-        { role: 'user', content: prompt }
-      ],
-      max_tokens: 200,
-      temperature: 0.7
-    })
-  })
-
-  if (!response.ok) {
-    throw new Error(`AI 服务暂时不可用: ${response.status}`)
-  }
-
-  const result = await response.json()
-  const summary = result.choices?.[0]?.message?.content || '摘要生成失败'
-
-  return {
-    summary: summary.trim(),
-    model: 'qwen-turbo',
-    timestamp: Date.now()
-  }
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId, title, content, apiKey })
+  }, 20000)
 }
 
-// 搜索热榜（本地搜索）
+// 搜索热榜（前端本地搜索）
 export async function searchTrends(query, trendsData = []) {
-  const q = query.toLowerCase()
+  const q = (query || '').toLowerCase().trim()
+  if (!q) {
+    return { items: [], query: '', total: 0, timestamp: Date.now() }
+  }
 
-  const results = trendsData.filter(item => {
+  const results = (trendsData || []).filter(item => {
     const title = (item.title || '').toLowerCase()
     const desc = (item.desc || '').toLowerCase()
     return title.includes(q) || desc.includes(q)
   })
 
-  // 按相关度排序
   results.sort((a, b) => {
     const aTitle = (a.title || '').toLowerCase()
     const bTitle = (b.title || '').toLowerCase()
@@ -182,17 +103,7 @@ export async function searchTrends(query, trendsData = []) {
   }
 }
 
-// 获取用户设置（本地存储）
-export async function getSettings(userId) {
-  return { message: '设置存储在本地' }
-}
-
-// 保存用户设置（本地存储）
-export async function saveSettings(userId, settings) {
-  return { success: true }
-}
-
-// 检查API健康状态
+// 健康检查（可用于调试部署是否正常）
 export async function checkHealth() {
-  return { status: 'ok', timestamp: Date.now() }
+  return fetchJson('/api/health', { method: 'GET' })
 }
